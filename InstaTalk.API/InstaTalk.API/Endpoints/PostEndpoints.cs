@@ -18,6 +18,7 @@ public static class PostEndpoints
                        .RequireRateLimiting("StrictPolicy");
 
         group.MapPost("/", CreatePost);
+        group.MapGet("/", GetFeed);
         group.MapPut("/{id:guid}", UpdatePost);
         group.MapDelete("/{id:guid}", DeletePost);
         group.MapPost("/{id:guid}/like", ToggleLike);
@@ -28,21 +29,21 @@ public static class PostEndpoints
         Guid.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
     private static async Task<IResult> CreatePost(
-        [FromBody] CreatePostRequest request,
-        ClaimsPrincipal user,
-        AppDbContext db)
+            [FromBody] CreatePostRequest request,
+            ClaimsPrincipal user,
+            AppDbContext db)
     {
         var post = new Post
         {
             OwnerId = GetUserId(user),
-            Content = request.Content
+            Content = request.Content,
+            ImageUrl = request.ImageUrl
         };
 
         db.Posts.Add(post);
-        // Aplica o RLS no save
         await db.SaveChangesWithRlsAsync(GetUserId(user));
 
-        return Results.Created($"/api/v1/posts/{post.Id}", new { post.Id });
+        return Results.Created($"/api/v1/posts/{post.Id}", new { post.Id, post.ImageUrl });
     }
 
     private static async Task<IResult> UpdatePost(
@@ -69,7 +70,8 @@ public static class PostEndpoints
     private static async Task<IResult> DeletePost(
         Guid id,
         ClaimsPrincipal user,
-        AppDbContext db)
+        AppDbContext db,
+        IWebHostEnvironment env)
     {
         var userId = GetUserId(user);
         var post = await db.Posts.FirstOrDefaultAsync(p => p.Id == id);
@@ -77,10 +79,51 @@ public static class PostEndpoints
         if (post == null || post.OwnerId != userId)
             return Results.NotFound(new { error = "Post not found or unauthorized." });
 
+        // 1. Apaga do banco de dados primeiro
         db.Posts.Remove(post);
         await db.SaveChangesWithRlsAsync(userId);
 
+        // 2. Limpa o arquivo físico (se existir)
+        if (!string.IsNullOrEmpty(post.ImageUrl))
+        {
+            // Remove a barra inicial ("/uploads/..." vira "uploads/...") para evitar caminhos absolutos errados
+            var relativePath = post.ImageUrl.TrimStart('/');
+            var fullPath = Path.Combine(env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), relativePath);
+
+            if (File.Exists(fullPath))
+            {
+                File.Delete(fullPath); // Elimina a imagem do disco
+            }
+        }
+
         return Results.NoContent();
+    }
+
+    private static async Task<IResult> GetFeed(
+        ClaimsPrincipal user,
+        AppDbContext db)
+    {
+        var currentUserId = GetUserId(user);
+
+        // Usamos AsNoTracking para máxima performance em consultas de leitura pura.
+        // Selecionamos apenas os campos necessários (Defense in Depth contra Data Exposure).
+        var feed = await db.Posts
+            .AsNoTracking()
+            .OrderByDescending(p => p.CreatedAt)
+            .Select(p => new
+            {
+                p.Id,
+                p.OwnerId, // Em um cenário real, faríamos um Join com a tabela Users para pegar o nome
+                p.Content,
+                p.ImageUrl,
+                p.CreatedAt,
+                LikesCount = p.Likes.Count,
+                // Valida se o ID do usuário atual está na lista de likes deste post
+                HasLiked = p.Likes.Any(l => l.UserId == currentUserId)
+            })
+            .ToListAsync();
+
+        return Results.Ok(feed);
     }
 
     private static async Task<IResult> ToggleLike(

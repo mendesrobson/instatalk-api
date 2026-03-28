@@ -96,6 +96,7 @@ app.UseHttpLogging();
 app.UseExceptionHandler();
 app.UseMiddleware<SecurityHoneypotMiddleware>(); // Derruba conexões banidas instantaneamente
 
+app.UseStaticFiles(); // Permite servir arquivos da pasta wwwroot
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -103,6 +104,7 @@ app.UseAuthorization();
 // --- 6. MAPEAMENTO DOS ENDPOINTS ---
 app.MapAuthEndpoints();
 app.MapPostEndpoints();
+app.MapUploadEndpoints();
 app.MapSystemEndpoints();
 
 app.Lifetime.ApplicationStarted.Register(() =>
