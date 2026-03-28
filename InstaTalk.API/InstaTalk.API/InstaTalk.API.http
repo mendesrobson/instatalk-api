@@ -1,0 +1,6 @@
+@InstaTalk.API_HostAddress = http://localhost:5027
+
+GET {{InstaTalk.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

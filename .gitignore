@@ -39,3 +39,47 @@
 
 # debug information files
 *.dwo
+
+# Visual Studio Code
+.vscode/
+
+# Visual Studio
+.vs/
+
+
+# ----------------------------------------------------------------------------
+# Segurança, Segredos e Variáveis de Ambiente
+# ----------------------------------------------------------------------------
+# Ficheiros de ambiente (Environment variables)
+.env
+.env.*
+*.env
+*.local
+
+bin/
+
+obj/
+
+# Segredos do utilizador .NET (User Secrets) e overrides locais
+secrets.json
+appsettings.json
+appsettings.*.json
+appsettings.*.local.json
+
+# Certificados e chaves criptográficas
+*.pem
+*.crt
+*.key
+*.pfx
+*.p12
+*.snk
+
+# Perfis de publicação (frequentemente contêm senhas de base de dados e FTP)
+*.publishxml
+*.publishsettings
+
+# Definições de IDE específicas do utilizador (podem conter connection strings locais)
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
