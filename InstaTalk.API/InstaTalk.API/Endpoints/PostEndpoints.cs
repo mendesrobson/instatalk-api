@@ -21,7 +21,7 @@ public static class PostEndpoints
         group.MapGet("/", GetFeed);
         group.MapPut("/{id:guid}", UpdatePost);
         group.MapDelete("/{id:guid}", DeletePost);
-        group.MapPost("/{id:guid}/like", ToggleLike);
+        group.MapPost("/{id:guid}/like", ToggleLike).RequireRateLimiting("LikesPolicy");
     }
 
     // Helper para extrair o ID do JWT (Segurança Primária)

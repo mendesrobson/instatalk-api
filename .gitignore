@@ -83,3 +83,5 @@ appsettings.*.local.json
 *.userosscache
 *.sln.docstates
 *.suo
+
+wwwroot/uploads/*

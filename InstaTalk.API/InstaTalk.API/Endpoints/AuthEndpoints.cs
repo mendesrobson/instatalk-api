@@ -17,6 +17,7 @@ public static class AuthEndpoints
         group.MapPost("/register", Register).RequireRateLimiting("StrictPolicy");
         group.MapPost("/login", Login).RequireRateLimiting("StrictPolicy");
         group.MapPost("/logout", Logout).RequireAuthorization();
+        group.MapPost("/refresh", RefreshToken);
     }
 
     private static async Task<IResult> Register(
@@ -85,5 +86,25 @@ public static class AuthEndpoints
         }
 
         return Results.NoContent();
+    }
+
+    private static async Task<IResult> RefreshToken(
+            [FromBody] RefreshTokenRequest request,
+            AppDbContext db,
+            JwtTokenGenerator tokenGenerator)
+    {
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+
+        if (user == null)
+            return Results.Unauthorized();
+
+        var newAccessToken = tokenGenerator.GenerateAccessToken(user.Id);
+        var newRefreshToken = Guid.NewGuid().ToString();
+
+        return Results.Ok(new
+        {
+            accessToken = newAccessToken,
+            refreshToken = newRefreshToken
+        });
     }
 }

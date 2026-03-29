@@ -83,6 +83,27 @@ builder.Services.AddRateLimiter(options =>
         return RateLimitPartition.GetFixedWindowLimiter($"{ip}|{userAgent}",
             _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(1) });
     });
+
+    options.AddPolicy("LikesPolicy", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip";
+        return RateLimitPartition.GetFixedWindowLimiter(ip,
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1) });
+    });
+});
+
+// --- SERVIÇOS DE SEGURANÇA ---
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        // Lê do appsettings.json ou usa o padrão 4200
+        var allowedOrigins = builder.Configuration["CORS_ALLOWED_ORIGINS"]?.Split(',') ?? new[] { "http://localhost:4200" };
+
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()  // Permite o envio do cabeçalho 'Authorization: Bearer...'
+              .AllowAnyMethod(); // Permite GET, POST, PUT, DELETE, OPTIONS
+    });
 });
 
 var app = builder.Build();
@@ -94,6 +115,10 @@ app.UseHttpLogging();
 
 // --- 5. PIPELINE HTTP (A ORDEM IMPORTA) ---
 app.UseExceptionHandler();
+
+// --- 6, Ativa a política de CORS  ---
+app.UseCors("FrontendPolicy");
+
 app.UseMiddleware<SecurityHoneypotMiddleware>(); // Derruba conexões banidas instantaneamente
 
 app.UseStaticFiles(); // Permite servir arquivos da pasta wwwroot
