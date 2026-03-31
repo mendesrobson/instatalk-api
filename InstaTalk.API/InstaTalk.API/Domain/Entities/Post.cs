@@ -9,4 +9,6 @@ public class Post
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 
     public ICollection<Like> Likes { get; set; } = new List<Like>();
+
+    public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 }

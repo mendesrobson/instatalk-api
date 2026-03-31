@@ -1,14 +1,15 @@
 using InstaTalk.API.Endpoints;
 using InstaTalk.API.Infrastructure.Data;
+using InstaTalk.API.Infrastructure.Messaging;
 using InstaTalk.API.Infrastructure.Security;
 using InstaTalk.API.Middlewares; // Assumindo que o GlobalExceptionHandler e o HoneypotMiddleware estão aqui
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System.Text;
 using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.HttpLogging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,6 +70,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
+
+// injeções de dependência (DbContext, Redis, etc)
+builder.Services.AddScoped<IEventBus, RabbitMqEventBus>();
+builder.Services.AddHostedService<PostAuditWorker>();
 
 builder.Services.AddEndpointsApiExplorer();
 
