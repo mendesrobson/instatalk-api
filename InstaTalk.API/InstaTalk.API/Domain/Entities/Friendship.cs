@@ -5,7 +5,7 @@ public enum FriendshipStatus
     Pending = 0,   // Convite enviado, aguardando resposta
     Accepted = 1,  // Amigos!
     Declined = 2,  // Convite recusado
-    Blocked = 3    // Usuário bloqueado (Opcional para segurança)
+    Blocked = 3    // Usuário bloqueado
 }
 
 public class Friendship

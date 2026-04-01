@@ -23,8 +23,8 @@ public static class PostEndpoints
         group.MapPut("/{id:guid}", UpdatePost);
         group.MapDelete("/{id:guid}", DeletePost);
         group.MapPost("/{id:guid}/like", ToggleLike).RequireRateLimiting("LikesPolicy");
-        group.MapGet("/{id:guid}/comments", GetComments);
-        group.MapPost("/{id:guid}/comments", AddComment);
+        group.MapGet("/{id:guid}/comments", GetComments).RequireRateLimiting("LikesPolicy");
+        group.MapPost("/{id:guid}/comments", AddComment).RequireRateLimiting("LikesPolicy");
     }
 
     // Helper para extrair o ID do JWT (Segurança Primária)

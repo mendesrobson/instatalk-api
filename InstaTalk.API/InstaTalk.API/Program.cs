@@ -135,6 +135,7 @@ app.UseAuthorization();
 app.MapAuthEndpoints();
 app.MapPostEndpoints();
 app.MapUploadEndpoints();
+app.MapUserEndpoints();
 app.MapSystemEndpoints();
 
 app.Lifetime.ApplicationStarted.Register(() =>

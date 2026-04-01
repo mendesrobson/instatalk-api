@@ -11,7 +11,6 @@ public class PostAuditWorker : BackgroundService
     private readonly ILogger<PostAuditWorker> _logger;
     private IConnection? _connection;
 
-    // V7: IModel foi descontinuado, agora usamos IChannel
     private IChannel? _channel;
 
     public PostAuditWorker(IConfiguration configuration, ILogger<PostAuditWorker> logger)
@@ -32,7 +31,6 @@ public class PostAuditWorker : BackgroundService
 
         try
         {
-            // V7: Toda a conexão é feita com Await
             _connection = await factory.CreateConnectionAsync(stoppingToken);
             _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
@@ -45,7 +43,6 @@ public class PostAuditWorker : BackgroundService
             return; // Se falhar, sai fora para não travar a API
         }
 
-        // V7: Usamos a versão Async do consumidor
         var consumer = new AsyncEventingBasicConsumer(_channel);
 
         consumer.ReceivedAsync += async (model, ea) =>
@@ -60,7 +57,6 @@ public class PostAuditWorker : BackgroundService
 
             _logger.LogWarning("[WORKER ASSÍNCRONO] Tarefa concluída com sucesso!\n");
 
-            // V7: O Ack também é assíncrono
             await _channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false, cancellationToken: stoppingToken);
         };
 
